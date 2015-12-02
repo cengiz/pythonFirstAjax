@@ -1,0 +1,119 @@
+﻿{% extends "app/layout.html" %}
+
+{% block content %}
+
+<script>
+    
+    $(document).ready(
+        function () {
+
+            load_post_data();
+
+        $('#post-form').on('submit', function (event) {
+            event.preventDefault();
+            console.log("form submitted!")  // sanity check
+            create_post();
+        });
+
+        function create_post() {
+            console.log("create post is working!") // sanity check
+            $.ajax({
+                url: "create_post", 
+                type: "POST", 
+                data: { the_post: $('#post-text').val() },
+
+                // handle a successful response
+                success: function (json) {
+                    $('#post-text').val(''); // remove the value from the input
+                    console.log(json); 
+                    $("#talk").prepend("<li><strong>" + json.text + "</strong> - <em> " + json.author + "</em> - <span> " + json.created + "</span></li>");
+                    console.log("success"); 
+                },
+
+                // handle a non-successful response
+                error: function (xhr, errmsg, err) {
+                    $('#results').html("<div class='alert-box alert radius' data-alert>Oops! We have encountered an error: " + errmsg +
+                        " <a href='#' class='close'>&times;</a></div>"); // add the error to the dom
+                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                }
+            });
+        };
+
+        function load_post_data() {
+            $.ajax({
+                url: "load_post_data",
+                type: "POST",
+                data: { the_post: $('#post-text').val() },
+
+                // handle a successful response
+                success: function (json) {
+
+                    //var jsonxx = $.parseJSON(json);
+                    //alert(jsonxx);
+                    //$.each(json, function(i, item) {
+                    //    alert(item);
+                    //});​
+
+                    //for (i = 0; i < json.length; i++) {
+                    //    alert(json[i].author);
+                    //    $("#talk").prepend("<li><strong>" + json[i].text + "</strong> - <em> " + json[i].author + "</em> - <span> " + json[i].created + "</span></li>");
+                    //    //$('ul').append('<li>' + data[i] + '</li>');
+                    //}
+                    //alert(json);
+                    $.each(json, function (k, v) {
+                        
+                        //alert(v['fields']['text']);
+                        //alert(v);
+                        $("#talk").prepend("<li><strong>" + v['fields']['text'] + "</strong> - <em> " + v['fields']['author'] + "</em> - <span> " + v['fields']['created'] + "</span></li>");
+                    });
+
+                    console.log(json);
+                    
+                    console.log("success");
+                },
+
+                // handle a non-successful response
+                error: function (xhr, errmsg, err) {
+                    $('#results').html("<div class='alert-box alert radius' data-alert>Oops! We have encountered an error: " + errmsg +
+                        " <a href='#' class='close'>&times;</a></div>"); // add the error to the dom
+                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                }
+            });
+        };
+    });
+    
+</script>
+
+<h2>{{ title }}.</h2>
+<h3>{{ message }}</h3>
+
+<table>
+    <tr>
+        <th>Field ad</th>
+        <th>Field soyad</th>
+        <th>Field doğum tarihi</th>
+    </tr>
+    {% for item in query_results %}
+    <tr> 
+        <td>{{ item.ad }}</td>
+        <td>{{ item.soyad }}</td>
+        <td>{{ item.dogumtarihi }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+<form method="POST" id="post-form">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <div class="fieldWrapper" id="the_post">
+        {{ form.text }}
+    </div>
+    <input type="text" name="post-text" id="post-text">
+    
+    <div id="results"></div> <!-- errors go here -->
+    <input type="submit" value="Post" class="tiny button">
+
+    <ul id="talk"></ul>
+</form>
+
+{% endblock %}
